@@ -1,43 +1,56 @@
-var express = require('express'),
-	_ = require('underscore'),
-	Q = require('q'),
-
-	historyDao = require('./lib/historyDao'),
-	tracker = require('./lib/tracker'),
-	Project = require('./lib/Project');
+var express = require('express');
+var _ = require('underscore');
+var Q = require('q');
+var historyDao = require('./lib/historyDao');
+var Tracker = require('./lib/tracker');
+var Project = require('./lib/Project');
+var Config = require('../package.json');
+var Path = require('path');
 
 // command line parameters
-var argv = require('optimist')
-	.options('port', {
-		alias: 'p',
-		default: 1337
-	})
-	.options('password', {
-		alias: 'pass',
-		default: 'admin'
-	})
-	// TODO: get r.js optimizer going again and run on startup (according to NODE_ENV)
-	.options('optimized', {
-		alias: 'opt',
-		default: false
-	})
-	.argv;
 
-var version = require('../package.json').version;
-var port = process.env.PORT || argv.port;
-var password = process.env.admin_pass || argv.password;
-var www_public = '/../public';
+var opts = require('nomnom')
+   .option('port', {
+      help: 'Port server should listen to',
+	  default: Config.omega.port
+   })
+   .option('password', {
+      help: 'password for admin',
+      default: Config.omega.password
+   })
+   .option('dbpath', {
+      help: 'path where all omega information should be stored',
+      default: Path.resolve(Path.dirname(Config.filename), Config.omega.dbpath)
+   })
+   .option('redis', {
+      help: 'Flag, inidicates whether Redis should be used for storing info or not',
+	  flag: true,
+      default: Config.omega.redis
+   })
+   .option('optimized', {
+	   default: false
+   })
+   .parse();
+
+var version = Config.version;
+var lActualPort = process.env.OMEGA_PORT || opts.port;
+var lAdminPassword = process.env.OMEGA_ADM_PASS || opts.password;
+
+//dirs 
+var lStaticDocsDir = Path.resolve(__dirname, '../public');
+var lViewsDir = Path.resolve(__dirname, '../views');
+var lDBsDir = process.env.OMEGA_DB_PATH || opts.dbpath;
 
 var projectDao, issueDao;
 
-if (argv.redis) {
+if (opts.redis) {
 	var client = process.env.REDISTOGO_URL ? require('redis-url').connect(process.env.REDISTOGO_URL) : require('redis').createClient();
 	var RedisProjectDao = require('./lib/RedisProjectDao');
 	projectDao = new RedisProjectDao(client);
 	var RedisIssueDao = require('./lib/RedisIssueDao');
 	issueDao = new RedisIssueDao(client);
 } else {
-	var db_dir = __dirname + '/../db/';
+	var db_dir = lDBsDir;
 	if (process.env['NODE_ENV'] === 'nodester') {
 		db_dir = __dirname + '/../'; // override due to https://github.com/nodester/nodester/issues/313
 	}
@@ -56,26 +69,26 @@ app.configure('development', function () {
 	var lessMiddleware = require('less-middleware');
 	app.use(lessMiddleware({
 		debug: true,
-		src: __dirname + '/server',
-		dest: __dirname + '/public'
+		src: Path.resolve(__dirname, 'server'),
+		dest: Path.resolve(__dirname, 'public')
 	}));
 });
 
 app.configure(function () {
-	app.set('views', __dirname + '/../views');
+	app.set('views', lViewsDir);
 	app.register('.html', require('ejs')); // call our views html
 
 	app.use(express.logger());
 	app.use(express.cookieParser());
 	app.use(express.session({ secret: 'nyan cat' })); // for flash messages
-	app.use(express.static(__dirname + www_public));
+	app.use(express.static(lStaticDocsDir);
 
 	app.use(express.bodyParser());
 	app.use(express.methodOverride());
 	app.use(app.router);
 });
 
-app.listen(port);
+app.listen(lActualPort);
 
 // TODO: extract routes elsewhere
 
@@ -118,7 +131,7 @@ app.post('/project', function (req, res) {
 			}
 			throw err;
 		}
-		tracker.listen(project);
+		Tracker.listen(project);
 		var message = project.unlisted ? "Here's your project. Remember: it's unlisted, so nobody'll find it unless you share the address." : "Here's your project.";
 		req.flash('info', message);
 		res.json({ url: project.url });
@@ -159,7 +172,7 @@ app.get('/project/:slug/export', function (req, res) {
 });
 
 
-var auth = express.basicAuth('admin', password);
+var auth = express.basicAuth('admin', lAdminPassword);
 
 app.get('/admin', auth, function (req, res) {
 	projectDao.findAll(function (err, projects) {
@@ -213,6 +226,6 @@ function viewOptions(options) {
 	return _.extend({}, { version: version }, options);
 }
 
-tracker.init(app, projectDao, issueDao);
+Tracker.init(app, projectDao, issueDao);
 
-console.log('Ω v' + version + ' running on port ' + port);
+console.log('Ω v' + version + ' running on port ' + lActualPort);
