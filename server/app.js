@@ -52,7 +52,7 @@ if (opts.redis) {
 } else {
 	var db_dir;
 	if (process.env['NODE_ENV'] === 'nodester') {
-		db_dir = __dirname + '/../'; // override due to https://github.com/nodester/nodester/issues/313
+		db_dir = Path.resolve(__dirname, '..'); // override due to https://github.com/nodester/nodester/issues/313
 	}
 	else {
 	    db_dir = lDBsDir;
@@ -70,9 +70,8 @@ app.configure('development', function () {
 	console.log('Starting development server');
 
 	var lessMiddleware = require('less-middleware');
-	app.use(lessMiddleware({
+	app.use(lessMiddleware(Path.resolve(__dirname, 'server'), {
 		debug: true,
-		src: Path.resolve(__dirname, 'server'),
 		dest: Path.resolve(__dirname, 'public')
 	}));
 });

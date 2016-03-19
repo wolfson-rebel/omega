@@ -33,8 +33,8 @@
   "dependencies": {
     "ejs": "0.6.x",
     "express": "2.5.x",
-    "less-middleware": "0.1.x",
-    "node-markdown": "0.1.x",
+    "less-middleware": "^2.1.0",
+    "marked": "^0.3.5",
     "nomnom": "^1.8.1",
     "requirejs": "2.0.x",
     "slugs": "0.1.x",

@@ -1,6 +1,6 @@
 var sio = require('socket.io'),
 	_ = require('underscore'),
-	markdown = require('node-markdown').Markdown,
+	marked = require('marked'),
 	requirejs = require('../requirejs-configured'),
 
 	issueDao, // set in init
@@ -39,10 +39,10 @@ tracker.listen = function (project) {
 
 function markdownizeItem(item) {
 	if (item.details && item.details.message) {
-		item.details.message = markdown(item.details.message, true, allowedHtml, null, true);
+		item.details.message = marked(item.details.message);
 	}
 	if (item.description) {
-		item.description = markdown(item.description, true, allowedHtml, null, true);
+		item.description = marked(item.description);
 	}
 	return item;
 }
