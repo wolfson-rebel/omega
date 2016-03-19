@@ -19,7 +19,7 @@ var opts = require('nomnom')
       default: Config.omega.password
    })
    .option('dbpath', {
-      help: 'path where all omega information should be stored',
+      help: 'path where all omega information should be stored. Directory must exist and have appropriate rights',
       default: Path.resolve(Path.dirname(Config.filename), Config.omega.dbpath)
    })
    .option('redis', {
@@ -50,9 +50,12 @@ if (opts.redis) {
 	var RedisIssueDao = require('./lib/RedisIssueDao');
 	issueDao = new RedisIssueDao(client);
 } else {
-	var db_dir = lDBsDir;
+	var db_dir;
 	if (process.env['NODE_ENV'] === 'nodester') {
 		db_dir = __dirname + '/../'; // override due to https://github.com/nodester/nodester/issues/313
+	}
+	else {
+	    db_dir = lDBsDir;
 	}
 
 	projectDao = require('./lib/projectDao');
@@ -81,7 +84,7 @@ app.configure(function () {
 	app.use(express.logger());
 	app.use(express.cookieParser());
 	app.use(express.session({ secret: 'nyan cat' })); // for flash messages
-	app.use(express.static(lStaticDocsDir);
+	app.use(express.static(lStaticDocsDir));
 
 	app.use(express.bodyParser());
 	app.use(express.methodOverride());
