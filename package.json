@@ -35,7 +35,7 @@
     "express": "2.5.x",
     "less-middleware": "0.1.x",
     "node-markdown": "0.1.x",
-    "nomnom": "^0.6.1",
+    "nomnom": "^1.8.1",
     "requirejs": "2.0.x",
     "slugs": "0.1.x",
     "socket.io": "0.8.x",
@@ -59,6 +59,6 @@
 	"port": 1337,
 	"password": "admin",
 	"dbpath": "db",
-	"redis": true
+	"redis": false
   }
 }
